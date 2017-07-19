@@ -1,5 +1,7 @@
 # Arduino Cocktail
 
+[![Build Status](https://travis-ci.org/xythobuz/Arduino-Cocktail.svg?branch=master)](https://travis-ci.org/xythobuz/Arduino-Cocktail)
+
 This Arduino sketch can be used to control a cocktail machine, consisting in my case of four solenoids, controlled by relais, that open or close the path for up to four ingredients.
 
 The user interface is implemented using an 128x64 monochrome I2C OLED and three pushbuttons.
