@@ -38,12 +38,16 @@
 #define GLASS_ANIM_WIDTH 35
 #define GLASS_ANIM_HEIGHT (OLED_HEIGHT - (2 * GLASS_ANIM_OFF_Y))
 
+#define FLOW_RATE (1000 / 50) // 1000ms / 50ml
+
 extern Debouncer s1;
 extern Debouncer s2;
 extern Debouncer s3;
 
 void initUI(void);
 
+int maintenanceActFunc(MenuEntry **entry, void *userData);
+int maintenanceDrawFunc(MenuEntry *entry, void *userData);
 int manualActFunc(MenuEntry **entry, void *userData);
 int manualDrawFunc(MenuEntry *entry, void *userData);
 
@@ -52,5 +56,5 @@ int ingredientDrawFunc(MenuEntry *entry, void *userData);
 int dispenseActFunc(MenuEntry **entry, void *userData);
 int dispenseDrawFunc(MenuEntry *entry, void *userData);
 
-#endif
+#endif // __UI_H__
 

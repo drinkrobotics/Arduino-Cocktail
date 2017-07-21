@@ -80,7 +80,12 @@ void writeLine(int line, const char *s) {
     }
 }
 
-void writeLine(int line, String &s) {
+void writeLine(int line, const String &s) {
     writeLine(line, s.c_str());
+}
+
+void writeLine(int line, const __FlashStringHelper *s) {
+    String st(s);
+    writeLine(line, st.c_str());
 }
 

@@ -2,7 +2,7 @@
  * Arduino-Cocktail
  *
  * Dispenser
- * Copyright 2016 by Thomas Buck <xythobuz@xythobuz.de>
+ * Copyright 2017 by Thomas Buck <xythobuz@xythobuz.de>
  *
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):

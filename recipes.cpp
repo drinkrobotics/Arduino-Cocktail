@@ -25,7 +25,7 @@ Ingredient ingMate      = { 3, "Club Mate",    0, 20,  20 };
 Ingredient *ingredients[INGREDIENT_COUNT] = { &ingCoke, &ingCokeLight, &ingRum, &ingMate };
 
 // List of recipes
-// Name, size, list of parts: ingredient number, percentage
+// Name, size in ml, list of parts: ingredient pointer, percentage
 Recipe recRumCola = { "Rum-Cola", 350, {
     { &ingCoke, 75 },
     { &ingRum, 25 },

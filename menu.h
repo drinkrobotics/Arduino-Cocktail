@@ -66,5 +66,5 @@ class MenuEntry {
     int act(MenuEntry **entry);
 };
 
-#endif
+#endif // __MENU_H__
 

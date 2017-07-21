@@ -25,9 +25,12 @@ MenuEntry mainMenuEntry("Main Menu");
 MenuEntry autoMixMenuEntry("Auto Mixing", &mainMenuEntry);
 MenuEntry manualMixMenuEntry("Manual Mixing", &mainMenuEntry);
 MenuEntry ingredientsMenuEntry("Ingredient List", &mainMenuEntry);
+MenuEntry maintenanceMenuEntry("Maintenance", &mainMenuEntry);
 
 MenuEntry manualMix1MenuEntry("Valve 1 & 2", &manualMixMenuEntry, manualDrawFunc, manualActFunc, (void *)(0x01 | 0x02));
 MenuEntry manualMix2MenuEntry("Valve 3 & 4", &manualMixMenuEntry, manualDrawFunc, manualActFunc, (void *)(0x04 | 0x08));
+
+MenuEntry maintenanceRunAllMenuEntry("Open all Valves", &maintenanceMenuEntry, maintenanceDrawFunc, maintenanceActFunc);
 
 MenuEntry *ingredientMenuEntries[INGREDIENT_COUNT];
 MenuEntry *recipeAutoMenuEntries[RECIPE_COUNT];
@@ -56,23 +59,58 @@ void initUI(void) {
 
     for (int i = 0; i < INGREDIENT_COUNT; i++) {
         Serial.println(F("Creating Ingredient menu entry..."));
-        
+
         ingredientMenuEntries[i] = new MenuEntry(ingredients[i]->name,
                 &ingredientsMenuEntry, ingredientDrawFunc, alwaysReturnActFunc, ingredients[i]);
     }
 
     for (int i = 0; i < RECIPE_COUNT; i++) {
         Serial.println(F("Creating recipe menu entry..."));
-        
+
         recipeAutoMenuEntries[i] = new MenuEntry(recipes[i]->name,
                 &autoMixMenuEntry, dispenseDrawFunc, dispenseActFunc, recipes[i]);
     }
 }
 
+int maintenanceDrawFunc(MenuEntry *entry, void *userData) {
+    writeLine(0, F("Maintenance"));
+    writeLine(1, "");
+    writeLine(2, F("Opening all Valves"));
+    writeLine(3, "");
+    writeLine(4, F("Press button to"));
+    writeLine(5, F("close and exit"));
+    writeLine(6, "");
+    writeLine(7, "");
+
+    DRAW_TEXT();
+
+    for (int i = 0; i < 4; i++) {
+        digitalWrite(valves[i], LOW);
+    }
+
+    return MENU_NO_ERR;
+}
+
+int maintenanceActFunc(MenuEntry **entry, void *userData) {
+    int sw1 = s1.poll();
+    int sw2 = s2.poll();
+    int sw3 = s3.poll();
+
+    if ((sw1 == -1) || (sw2 == -1) || (sw3 == -1)) {
+        for (int i = 0; i < 4; i++) {
+            digitalWrite(valves[i], HIGH);
+        }
+        *entry = (*entry)->getParent();
+        return MENU_SHOULD_DRAW;
+    }
+
+    return MENU_NO_ERR;
+}
+
 int manualDrawFunc(MenuEntry *entry, void *userData) {
     int valvesel = (int)userData;
 
-    String name("Valves:");
+    String name(F("Valves:"));
     int l = 1;
     for (int i = 0; i < 4; i++) {
         if (valvesel & (1 << i)) {
@@ -84,8 +122,8 @@ int manualDrawFunc(MenuEntry *entry, void *userData) {
 
     writeLine(0, name);
     l++;
-    writeLine(l++, "L & R to dispense");
-    writeLine(l++, "Center to exit!");
+    writeLine(l++, F("L & R to dispense"));
+    writeLine(l++, F("Center to exit!"));
 
     DRAW_TEXT();
     return MENU_NO_ERR;
@@ -133,22 +171,18 @@ int ingredientDrawFunc(MenuEntry *entry, void *userData) {
     Ingredient *ing = (Ingredient *)userData;
 
     writeLine(0, entry->getName());
-    writeLine(1, String("Valve No: ") + String(ing->valve));
+    writeLine(1, String(F("Valve No: ")) + String(ing->valve));
     writeLine(2, "");
-    writeLine(3, String(" Alcohol: ") + String(ing->alcohol) + "%");
+    writeLine(3, String(F(" Alcohol: ")) + String(ing->alcohol) + "%");
     writeLine(4, "");
-    writeLine(5, " / 100ml:");
-    writeLine(6, String("Caffeine: ") + String(ing->caffeine) + "mg");
-    writeLine(7, String("Calories: ") + String(ing->calories) + "kcal");
+    writeLine(5, F(" / 100ml:"));
+    writeLine(6, String(F("Caffeine: ")) + String(ing->caffeine) + "mg");
+    writeLine(7, String(F("Calories: ")) + String(ing->calories) + "kcal");
 
     DRAW_TEXT();
 
     return MENU_NO_ERR;
 }
-
-#define FLOW_RATE (1000 / 50) // 1000ms / 50ml
-
-static int lastDispensionTimes[4] = { 0, 0, 0, 0 };
 
 int dispenseActFunc(MenuEntry **entry, void *userData) {
     static unsigned long progressTime = 0;
@@ -191,18 +225,15 @@ int dispenseActFunc(MenuEntry **entry, void *userData) {
     if (!dispensing && !dispensed && !showStats) {
         if (sw2 == -1) {
             // start dispenser, calculate timings
-            lastDispensionTimes[0] = 0;
-            lastDispensionTimes[1] = 0;
-            lastDispensionTimes[2] = 0;
-            lastDispensionTimes[3] = 0;
+            int dispensionTimes[4] = { 0, 0, 0, 0 };
             for (int i = 0; i < 4; i++) {
                 if (recipe->parts[i].ingredient != NULL) {
                     int targetSize = recipe->parts[i].percentage * recipe->size / 100;
                     int targetTime = targetSize * FLOW_RATE;
-                    lastDispensionTimes[recipe->parts[i].ingredient->valve] = targetTime;
+                    dispensionTimes[recipe->parts[i].ingredient->valve] = targetTime;
                 }
             }
-            startDispensing(lastDispensionTimes[0], lastDispensionTimes[1], lastDispensionTimes[2], lastDispensionTimes[3]);
+            startDispensing(dispensionTimes[0], dispensionTimes[1], dispensionTimes[2], dispensionTimes[3]);
             dispensed = true;
             progressTime = millis();
         } else {
@@ -238,7 +269,7 @@ int dispenseActFunc(MenuEntry **entry, void *userData) {
 static int dispenseDrawDrinkInfo(Recipe *recipe) {
     uint32_t sizePx = ((uint32_t)recipe->size /* - DRINK_SIZE_MINIMUM */) * OLED_WIDTH / (DRINK_SIZE_MAXIMUM /* - DRINK_SIZE_MINIMUM */);
 
-    String sizeInfo("Size: ");
+    String sizeInfo(F("Size: "));
     sizeInfo += recipe->size;
     sizeInfo += "ml";
 
@@ -298,8 +329,8 @@ static int dispenseDrawProgress(Recipe *recipe) {
     u8g.firstPage();
     do {
         u8g.setFont(LARGE_FONT);
-        u8g.drawStr(50, (1 * LARGE_FONT_HEIGHT), "Dispensing");
-        u8g.drawStr(50, (2 * LARGE_FONT_HEIGHT) + (1 * GLASS_TEXT_OFF), "Wait!");
+        u8g.drawStr(50, (1 * LARGE_FONT_HEIGHT), F("Dispensing"));
+        u8g.drawStr(50, (2 * LARGE_FONT_HEIGHT) + (1 * GLASS_TEXT_OFF), F("Wait!"));
         u8g.drawStr(50, (3 * LARGE_FONT_HEIGHT) + (2 * GLASS_TEXT_OFF), prog.c_str());
 
         u8g.drawHLine(GLASS_ANIM_OFF_X, OLED_HEIGHT - GLASS_ANIM_OFF_Y, GLASS_ANIM_WIDTH);
@@ -320,9 +351,9 @@ static int dispenseShowStats(Recipe *recipe) {
     // to not update properly...
     delay(250); // just wait a bit for this to pass
 
-    String alcohol("Alcohol: ");
-    String caffeine("Caffeine: ");
-    String calories("Calories: ");
+    String alcohol(F("Alcohol: "));
+    String caffeine(F("Caffeine: "));
+    String calories(F("Calories: "));
 
     uint32_t alcoholPercent = 0;
     uint32_t caffeineCont = 0;
@@ -349,10 +380,10 @@ static int dispenseShowStats(Recipe *recipe) {
     u8g.firstPage();
     do {
         u8g.setFont(LARGE_FONT);
-        u8g.drawStr(0, LARGE_FONT_HEIGHT, "Enjoy your drink!");
+        u8g.drawStr(0, LARGE_FONT_HEIGHT, F("Enjoy your drink!"));
 
         u8g.setFont(SMALL_FONT);
-        u8g.drawStr(0, LARGE_FONT_HEIGHT + (2 * SMALL_FONT_HEIGHT), "Statistics:");
+        u8g.drawStr(0, LARGE_FONT_HEIGHT + (2 * SMALL_FONT_HEIGHT), F("Statistics:"));
         u8g.drawStr(0, LARGE_FONT_HEIGHT + (3 * SMALL_FONT_HEIGHT), alcohol.c_str());
         u8g.drawStr(0, LARGE_FONT_HEIGHT + (4 * SMALL_FONT_HEIGHT), caffeine.c_str());
         u8g.drawStr(0, LARGE_FONT_HEIGHT + (5 * SMALL_FONT_HEIGHT), calories.c_str());

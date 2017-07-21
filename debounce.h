@@ -2,7 +2,7 @@
  * Arduino-Cocktail
  *
  * Pushbutton debouncing helper class
- * Copyright 2016 by Thomas Buck <xythobuz@xythobuz.de>
+ * Copyright 2017 by Thomas Buck <xythobuz@xythobuz.de>
  *
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -28,5 +28,5 @@ class Debouncer {
     unsigned long lastTime;
 };
 
-#endif
+#endif // __DEBOUNCE_H__
 
