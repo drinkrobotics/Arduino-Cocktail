@@ -8,6 +8,8 @@ The user interface is implemented using an 128x64 monochrome I2C OLED and three 
 
 Depends on the [u8glib](https://github.com/olikraus/u8glib)!
 
+[![Fritzing Schematic](http://xythobuz.de/img/arduino-cocktail-schem-small.png)](http://xythobuz.de/img/arduino-cocktail-schem.png) (Click for full-size)
+
 ## Licensing
 
     ----------------------------------------------------------------------------

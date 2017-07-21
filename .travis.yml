@@ -15,7 +15,7 @@ install:
     - platformio lib -g install "U8glib"
 
 script:
-    - platformio ci --board=uno
+    - platformio ci --board=nanoatmega328
 
 notifications:
   email:
